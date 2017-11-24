@@ -2,7 +2,7 @@ import requests
 
 WIKI_URL = 'https://en.wikipedia.org/w/api.php'
 
-class HistoryScraper:
+class HistoryFetcher:
 
     def __init__(self, wikipage_title):
         self.wikipage_title = wikipage_title
