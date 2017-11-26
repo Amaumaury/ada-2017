@@ -1,5 +1,6 @@
 import requests
 import numpy as np
+import dateutil.parser
 
 WIKI_URL = 'https://en.wikipedia.org/w/api.php'
 
@@ -46,6 +47,9 @@ class HistoryFetcher:
 
         for i, revision in enumerate(revisions):
             revision['change_size'] = changes_size[i]
+
+        for revision in revisions:
+            revision['timestamp'] = dateutil.parser.parse(revision['timestamp'])
 
         revisions.pop()
 
