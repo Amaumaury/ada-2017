@@ -1,4 +1,5 @@
 import requests
+import numpy as np
 
 WIKI_URL = 'https://en.wikipedia.org/w/api.php'
 
@@ -32,4 +33,29 @@ class HistoryFetcher:
             if 'continue' in response:
                 req_payload['rvcontinue'] = response['continue']['rvcontinue']
 
+        head_payload = dict(self.payload)
+        head_payload['rvlimit'] = 1
+        head_payload['rvstart'] = start_date
+
+        head_response = requests.get(WIKI_URL, params=head_payload).json()
+        head_response_data = list(head_response['query']['pages'].values())[0]['revisions']
+
+        revisions.extend(head_response_data)
+
+        changes_size = self.__add_change_size(revisions)
+
+        for i, revision in enumerate(revisions):
+            revision['change_size'] = changes_size[i]
+
+        revisions.pop()
+
         return revisions
+
+    def __add_change_size(self, revisions):
+        sizes = np.array(list(map(lambda revision: revision['size'], revisions)))
+
+        change_size = np.insert(sizes, 0, 0) - np.append(sizes, [0])
+        change_size = change_size[1:]
+        change_size[-1:] = 0
+
+        return change_size
