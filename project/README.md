@@ -32,7 +32,7 @@ List the dataset(s) you want to use, and some ideas on how do you expect to get,
 
 # A list of internal milestones :
 
-1. Get cluster of wikipedia pages for a few countries.[ Done]
+1. Get cluster of wikipedia pages for a few countries.[Rescheduled]
 2. Find a way to link events to some wikipedia pages.  [Done]
 3. Study the impact of main events on the country-clustered wikipedia pages [ work in progress, analyse more events ]
 4. Study Changes of wikipedia as an impact on stability of the country [ work in progress, analyse more countries, make a world map not only Europe]
