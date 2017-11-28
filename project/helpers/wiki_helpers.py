@@ -9,6 +9,9 @@ import os
 import json
 import folium
 
+# returns the estimated wikipedia page stability from year_start to November 2017 (now). 
+# The bigger the outlier factor, the more events are ignored (should be between 2 and 100)
+# can plot analytical data
 def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
     
     # fetch the changes
@@ -49,11 +52,12 @@ def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
         plt.show()
     
      # select outliers
-    sum_outliers = np.sum(changes_aggregated_month[changes_aggregated_month > outlier_factor* np.mean(changes_aggregated_month)])
+    sum_outliers = np.sum(changes_aggregated_month[changes_aggregated_month > thr_val])
     sum_all = np.sum(changes_aggregated_month)
     
     return sum_outliers/sum_all
 
+# makes a folium map
 def make_folium_map(json_map_path, object_path,  color_func, vmin, vmax, colors_table,location, zoom_start, legend_name  ):
 
     cantons_path = os.path.join('', json_map_path)
