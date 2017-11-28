@@ -11,6 +11,7 @@ A list of research questions you would like to address during the project.
 1. Is the number of changes in country-clustered Wikipedia information (number of pages, major edits to existing pages) a good indicator of stability of the country? 
 
 2. How fast, how far, and for how long are the news about events (.e.g. Conflict between countries) spread in Wikipedia (for the country page and related pages)?
+(this is to be analysed if we have time, its more complicate)
 
 3. Maybe, for some events, we could observe a lot of changes in wikipedia directly before the occurrence of the event ?
 
@@ -22,18 +23,19 @@ A list of research questions you would like to address during the project.
 List the dataset(s) you want to use, and some ideas on how do you expect to get, manage, process and enrich it/them. Show us you've read the docs and some examples, and you've a clear idea on what to expect. Discuss data size and format if relevant.
 
 ### Wikipedia:
-1. Wikipedia API
-2. Wikidata, link : https://www.wikidata.org/wiki/Wikidata:Main_Page
-3. Wikipedia dumps, link : https://dumps.wikimedia.org/ 
+1. Wikipedia API (requests)
 
 ### Event data:
-1. UCDP Dataset, link: http://ucdp.uu.se/downloads/
+1. UCDP Dataset, link: http://ucdp.uu.se/downloads/ (we proved with Ukraine data analysis that its not perfect)
 2. GDELT, link : https://www.gdeltproject.org/data.html#rawdatafiles
 3. Our own knowledge (Barcelona leaving Spain, UK leaving EU)
-4. Other datasets.
 
 # A list of internal milestones :
 
-1. Get cluster of wikipedia pages for a few countries. Those clusters should provide a summary of the different countries. 
-2. Find a way to link events to some wikipedia pages.  
-3. Study the impact of main events on the country-clustered wikipedia pages
+1. Get cluster of wikipedia pages for a few countries.[ Done]
+2. Find a way to link events to some wikipedia pages.  [Done]
+3. Study the impact of main events on the country-clustered wikipedia pages [ work in progress, analyse more events ]
+4. Study Changes of wikipedia as an impact on stability of the country [ work in progress, analyse more countries, make a world map not only Europe]
+4. Improve event detector for wikipedia changes
+5. Add multiple wikipedia pages (tree) to single events
+6
