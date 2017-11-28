@@ -63,4 +63,3 @@ class HistoryFetcher:
         change_size[-1:] = 0
 
         return change_size
-
