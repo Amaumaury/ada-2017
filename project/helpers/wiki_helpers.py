@@ -34,6 +34,7 @@ def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
     changes_aggregated_month = np.squeeze(changes_aggregated_month)
 
     thr_val = outlier_factor * np.mean(changes_aggregated_month)
+    thr2_val = thr_val*0.7
 
     if(plot_on):
         plt.rcParams["figure.figsize"] = (7,7)
@@ -49,13 +50,19 @@ def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
         plt.bar(indices, changes_aggregated_month[indices],color='red')
         plt.text(1.02,thr_val, 'summed as extrordinary\n changes above this line', va='center', ha="left", bbox=dict(facecolor="w",alpha=0.5),
         transform=ax.get_yaxis_transform())
+        indices2 = [i for i,v in enumerate( (changes_aggregated_month >= thr2_val) & (changes_aggregated_month < thr_val)) if v]
+        plt.bar(indices2, changes_aggregated_month[indices2],color='orange')
+        plt.text(1.02,thr2_val, 'significant above avg\n changes above this line', va='center', ha="left", bbox=dict(facecolor="w",alpha=0.5),
+        transform=ax.get_yaxis_transform())
+        plt.axhline(thr2_val, color="grey")
         plt.show()
 
      # select outliers
     sum_outliers = np.sum(changes_aggregated_month[changes_aggregated_month > thr_val])
+    sum_outliers += 0.2 * np.sum(changes_aggregated_month[ (changes_aggregated_month >= thr2_val) & (changes_aggregated_month < thr_val)])
     sum_all = np.sum(changes_aggregated_month)
 
-    return sum_outliers/sum_all
+    return (sum_outliers/sum_all), np.mean(changes_aggregated_month)
 
 # makes a folium map
 def make_folium_map(json_map_path, object_path,  color_func, vmin, vmax, colors_table,location, zoom_start, legend_name  ):
