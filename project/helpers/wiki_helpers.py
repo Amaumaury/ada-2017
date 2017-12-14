@@ -9,14 +9,39 @@ import os
 import json
 import folium
 
+
+def exponential_mle(data):
+    return len(data) / sum(data)
+
+#uses mle
+def get_stability_for_country(country, start, end, K = 1500, plot = False):
+    history = HistoryFetcher(country)
+    dates = history.get_edits_dates(start, end)
+    
+    timeframes, x, y = plt.hist(dates, bins=K)
+    if(plot == True):
+        plt.show()
+    
+    lambda_hat = exponential_mle(timeframes)
+    
+    # computing the mean wiki changes:
+    
+    date1 = datetime.strptime(start, '%Y%m%d%H%M%S')
+    date2 = datetime.strptime(end, '%Y%m%d%H%M%S')
+    
+    nr_days = (date2 - date1).days
+    mean_changes = len(dates)/nr_days
+    
+    return lambda_hat, mean_changes
+
 # returns the estimated wikipedia page stability from year_start to November 2017 (now).
 # The bigger the outlier factor, the more events are ignored (should be between 2 and 100)
 # can plot analytical data
-def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
+def wiki_change_factor(wiki_name,year_start, year_stop,outlier_factor, plot_on = False):
 
     # fetch the changes
     history_fetcher = HistoryFetcher(wiki_name)
-    response = history_fetcher.get_history(str(year_start)+'0101000000', '20171128000000')
+    response = history_fetcher.get_history(str(year_start)+'0101000000', str(year_stop)+'1230000000')
     dates = list(map(lambda revision: revision['timestamp'], response))
     dates_pd = pd.DataFrame(dates, columns=['date'])
     dates_pd['change']= 1;
@@ -24,7 +49,7 @@ def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
     # aggregate per month
     changes_aggregated_month = np.zeros([(2017 - year_start)*12,1])
     date_last = date(year=year_start,month=11,day=1)
-    for y in range(year_start,2017):
+    for y in range(year_start,year_stop):
         for m in range(0,12):
             date_current = date(year=y,month=m+1,day=1)
             changes_month = np.sum(dates_pd[ dates_pd['date'] > date_last][ dates_pd['date'] < date_current]['change'])
@@ -62,7 +87,7 @@ def wiki_change_factor(wiki_name,year_start, outlier_factor, plot_on = False):
     sum_outliers += 0.2 * np.sum(changes_aggregated_month[ (changes_aggregated_month >= thr2_val) & (changes_aggregated_month < thr_val)])
     sum_all = np.sum(changes_aggregated_month)
 
-    return (sum_outliers/sum_all), np.mean(changes_aggregated_month)
+    return (sum_outliers/sum_all)
 
 # makes a folium map
 def make_folium_map(json_map_path, object_path,  color_func, vmin, vmax, colors_table,location, zoom_start, legend_name  ):
