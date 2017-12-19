@@ -1,10 +1,10 @@
-# *What can you learn from Wikipedia without even reading it?*
+# *Wikipedia Changes and World Events*
 
 #### EPFL, ADA 2017
 
 ##### Authors: George Abi Younes, Amaury Combes, Patryk Oleniuk
 
-**report [report.pdf](https://github.com/Amaumaury/ada-2017/blob/master/project/learn-wikipedia-reading.pdf)<br>
+**report [report.pdf](https://github.com/Amaumaury/ada-2017/blob/master/project/wikipedia-world-events.pdf)<br>
 notebook [Final-notebook.ipynb](https://github.com/Amaumaury/ada-2017/blob/master/project/Final-notebook.ipynb)** 
 
 ## Abstract
