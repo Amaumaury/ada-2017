@@ -4,8 +4,8 @@
 
 ##### Authors: George Abi Younes, Amaury Combes, Patryk Oleniuk
 
-**report link HERE<br>
-notebook link HERE**
+**report [report.pdf](https://github.com/Amaumaury/ada-2017/blob/master/project/learn-wikipedia-reading.pdf)<br>
+notebook [Final-notebook.ipynb](https://github.com/Amaumaury/ada-2017/blob/master/project/Final-notebook.ipynb)** 
 
 ## Abstract
 
