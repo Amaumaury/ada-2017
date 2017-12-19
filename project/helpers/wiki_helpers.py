@@ -9,30 +9,93 @@ import os
 import json
 import folium
 from scipy.stats.stats import pearsonr
+import helpers.stats_helpers as stats_helpers
+import itertools
 
 
 def exponential_mle(data):
     return len(data) / sum(data)
+    
+
+def get_edits_dates_and_size(country, start, end):
+    history_fetcher = HistoryFetcher(country)
+    response = history_fetcher.get_history(start, end)
+
+    edits_dates = list(map(lambda revision: (revision['timestamp'], np.log(abs(revision['change_size']) + 1)), response))
+
+    return edits_dates
+
+
+def get_edits_dates(country, start, end):
+    history_fetcher = HistoryFetcher(country)
+    response = history_fetcher.get_history(start, end)
+
+    edits_dates = list(map(lambda revision: revision['timestamp'], response))
+
+    return edits_dates
+
+
+def get_edits_bins(country, start, end, number_of_bins):
+    history_fetcher = HistoryFetcher(country)
+    edits_history = history_fetcher.get_history(start, end)
+
+    edits_history = list(map(lambda revision: (revision['timestamp'], (abs(revision['change_size']) + 1)), edits_history))
+
+    unzipped_history = list(zip(*edits_history))
+    n_wikis = plt.hist(unzipped_history[0], bins=number_of_bins, weights=unzipped_history[1])[0]
+
+    edits_timeframed = list(sorted(n_wikis, key=lambda e: -e))
+
+    plt.clf()
+
+    return edits_timeframed
+
+
+def get_index(countries, start, end):
+    countries_history = [list(get_edits_dates(country, start, end)) for country in countries]
+
+    n_wikis = [list(plt.hist(history, bins=1500)[0]) for history in countries_history]
+    plt.clf()
+
+    mles = [stats_helpers.exponential_mle(n_wiki) for n_wiki in n_wikis]
+    samples_exponential = [stats_helpers.sample_exponential(n_wikis[i], mle) for i, mle in enumerate(mles)]
+
+    pearson_coef = [pearsonr(group_data(n_wiki)[1], samples_exponential[i])[0] for i, n_wiki in enumerate(n_wikis)]
+
+    countries_with_index = zip(countries, mles, pearson_coef)
+
+    return sorted(countries_with_index, key=lambda e: e[1])
+
+
+def group_data(data, normed=False):
+    groups = [[k, len(list(g))] for k, g in itertools.groupby(sorted(data))]
+    edits_per_bins, corres_bin_num = list(zip(*groups))
+
+    if normed:
+        corres_bin_num = [i / sum(corres_bin_num) for i in corres_bin_num]
+
+    return edits_per_bins, corres_bin_num
+
 
 #uses mle
 def get_stability_for_country(country, start, end, K = 1500, plot = False):
     history = HistoryFetcher(country)
     dates = history.get_edits_dates(start, end)
-    
+
     timeframes, x, y = plt.hist(dates, bins=K)
     if(plot == True):
         plt.show()
-    
-    lambda_hat = exponential_mle(timeframes)
-    
+
+    lambda_hat = stats_helpers.exponential_mle(timeframes)
+
     # computing the mean wiki changes:
-    
+
     date1 = datetime.strptime(start, '%Y%m%d%H%M%S')
     date2 = datetime.strptime(end, '%Y%m%d%H%M%S')
-    
+
     nr_days = (date2 - date1).days
     mean_changes = len(dates)/nr_days
-    
+
     return lambda_hat, mean_changes
 
 # returns the estimated wikipedia page stability from year_start to November 2017 (now).
@@ -181,7 +244,7 @@ def plot_most(countries_data, feat_to_plot, title = '', sort=1, nr_top=30, figsi
     handles = []
     for key in colors.keys():
         handles.append(mpatches.Patch(color=colors[key], label=key))
-    plt.legend(handles=handles)  
+    plt.legend(handles=handles)
     plt.xticks(range(len(cor_val)), countries, rotation=90)
     plt.ylabel('Wikipedia instability [1st metric]')
     plt.title('Top '+str(len(countries)) + title)
@@ -211,7 +274,7 @@ def get_country_values_perQuadClass(aggregated_gdelt, cntr_code, start, stop):
 
     x4 = val4['SQLDATE'].values
     y4 = (val4['Counter']/val4['Counter'].mean()).values
-    
+
     sum_all = np.sum(y1) + np.sum(y2) + np.sum(y3) + np.sum(y4)
     try:
         s1 = np.sum(y1)/sum_all
@@ -232,9 +295,9 @@ def analyse_wiki_events_correlation_QuadClass(aggregated_gdelt,country_code, cou
     # Keeps only the date field for each edit
     edits_dates = list(map(lambda revision: revision['timestamp'], response))
     plt.figure(figsize=(7,4))
-    
+
     bins_nr = int( (pd.Timestamp(date_stop) - pd.Timestamp(date_start) ).days/30.5  ) # 1mo per bar
-    
+
     # Add historgram for the number of edits on country's wikipedia page (normalized)
     n_wiki, bins_wiki, patches_wiki = plt.hist(edits_dates,\
                                                bins=bins_nr,\
@@ -243,13 +306,13 @@ def analyse_wiki_events_correlation_QuadClass(aggregated_gdelt,country_code, cou
                                                alpha=0.5,\
                                                label='# of wiki edits '+country_name)
     plt.hold(True)
-    
+
     x, y, s = get_country_values_perQuadClass(aggregated_gdelt,country_code , date_start, date_stop)
     corrs = list()
     surreneses =list()
     for i in range(len(x)):
 
-    
+
         # Add histogram for the number of events (normalized)s
         n_event, bins_event, patches_event = plt.hist(x[i],\
                                                       weights=y[i],
@@ -269,6 +332,5 @@ def analyse_wiki_events_correlation_QuadClass(aggregated_gdelt,country_code, cou
         plt.legend(loc='upper left')
         plt.title('Nr of Wiki Edits and GDELT Events for ' + country_name)
         plt.show()
-        
+
     return np.array(corrs)*np.array(surreneses), s
-    
