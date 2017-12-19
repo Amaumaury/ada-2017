@@ -62,7 +62,7 @@ def wiki_change_factor(wiki_name,year_start, year_stop,outlier_factor, plot_on =
     thr2_val = thr_val*0.7
 
     if(plot_on):
-        plt.rcParams["figure.figsize"] = (7,7)
+        plt.rcParams["figure.figsize"] = (5,4)
         fig = plt.figure()
         ax = fig.add_subplot(111)
         plt.bar(range(len(changes_aggregated_month)), changes_aggregated_month)
@@ -73,11 +73,11 @@ def wiki_change_factor(wiki_name,year_start, year_stop,outlier_factor, plot_on =
 
         indices = [i for i,v in enumerate(changes_aggregated_month >= thr_val) if v]
         plt.bar(indices, changes_aggregated_month[indices],color='red')
-        plt.text(1.02,thr_val, 'summed as extrordinary\n changes above this line', va='center', ha="left", bbox=dict(facecolor="w",alpha=0.5),
+        plt.text(-0.46,thr_val, 'summed as extrordinary\n changes above this line', va='center', ha="left", bbox=dict(facecolor="w",alpha=0.5),
         transform=ax.get_yaxis_transform())
         indices2 = [i for i,v in enumerate( (changes_aggregated_month >= thr2_val) & (changes_aggregated_month < thr_val)) if v]
         plt.bar(indices2, changes_aggregated_month[indices2],color='orange')
-        plt.text(1.02,thr2_val, 'significant above avg\n changes above this line', va='center', ha="left", bbox=dict(facecolor="w",alpha=0.5),
+        plt.text(-0.46,thr2_val, 'significant above avg\n changes above this line', va='center', ha="left", bbox=dict(facecolor="w",alpha=0.5),
         transform=ax.get_yaxis_transform())
         plt.axhline(thr2_val, color="grey")
         plt.show()
