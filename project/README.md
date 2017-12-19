@@ -4,7 +4,7 @@
 
 ##### Authors: George Abi Younes, Amaury Combes, Patryk Oleniuk
 
-**report [report.pdf](https://github.com/Amaumaury/ada-2017/blob/master/project/wikipedia-world-events.pdf)<br>
+**report [report.pdf](https://github.com/Amaumaury/ada-2017/blob/master/project/report/wikipedia-world-events.pdf)<br>
 notebook [Final-notebook.ipynb](https://github.com/Amaumaury/ada-2017/blob/master/project/Final-notebook.ipynb)** 
 
 ## Abstract
