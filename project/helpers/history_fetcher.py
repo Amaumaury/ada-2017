@@ -55,6 +55,10 @@ class HistoryFetcher:
 
         return revisions
 
+    def get_edits_dates(self, start_date, end_date):
+        revisions = self.get_history(start_date, end_date)
+        return [edit['timestamp'] for edit in revisions]
+
     def __add_change_size(self, revisions):
         sizes = np.array(list(map(lambda revision: revision['size'], revisions)))
 
