@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import os
 import json
 import folium
+from scipy.stats.stats import pearsonr
 
 
 def exponential_mle(data):
@@ -110,3 +111,164 @@ def make_folium_map(json_map_path, object_path,  color_func, vmin, vmax, colors_
     linear = folium.colormap.StepColormap( colors=colors_table, vmin=vmin, vmax=vmax,  caption=legend_name).add_to(m)
 
     return m;
+
+
+def get_country_values(aggregated_gdelt, cntr_code, normalize=True):
+    values_to_plot = aggregated_gdelt[ (aggregated_gdelt['ActionGeo_CountryCode'] == cntr_code)];
+    values_to_plot['ActionGeo_Type'] = 0;
+    values_to_plot.groupby(['SQLDATE','ActionGeo_CountryCode', 'ActionGeo_Type']).sum()
+    values_to_plot.reset_index(inplace=True)
+    if(normalize):
+        x = values_to_plot['SQLDATE']
+        y = values_to_plot['Counter']/ values_to_plot['Counter'].mean()
+    else:
+        x = values_to_plot['SQLDATE']
+        y = values_to_plot['Counter']
+    return x.values,y.values
+
+# computed distance between the line y=ax +c and the point x, y
+def distance_from_line(a,c,x,y):
+    a = -a;
+    c=-c;
+    return (a*x + y +c)/np.sqrt(a*a + 1)
+
+def truncate_names(arr_string, n):
+    for i in range (len(arr_string)):
+        arr_string[i] = arr_string[i][:n]
+    return arr_string
+
+def plot_most(countries_data, feat_to_plot, title = '', sort=1, nr_top=30, figsize =(8,3)):
+    codes = countries_data['Code'].values
+    countries = countries_data['Country'].values
+
+    cor_val = sort*countries_data[feat_to_plot].values
+    instab = countries_data['Wiki Instability old'].values
+    stab = countries_data['Wiki Stability MLE'].values
+
+    # filtering outliers
+    for i in range(len(instab)):
+        if(instab[i] < 0.0002) | (stab[i] > 100.0):
+            cor_val[i] = np.NaN
+
+    colors= {'Africa':'red','Europe':'green','Americas':'blue', 'Oceania':'yellow','Asia':'magenta'}
+
+    cor_val= np.array(cor_val)
+    countries = np.array(countries)
+
+    nans = np.isnan(cor_val)
+    countries = countries[~nans]
+    cor_val = cor_val[~nans]
+
+    cor_val = cor_val.astype(float)
+    idx = np.argsort(cor_val)
+    cor_val = cor_val[idx]
+    countries = countries[idx]
+    cor_val = sort*cor_val[-nr_top:]
+    countries = countries[-nr_top:]
+
+    plt.figure(figsize=figsize)
+    plt.bar(range(len(cor_val)), cor_val, align='center')
+
+    for i, val in enumerate(cor_val):
+        state= countries_data[countries_data['Country'] == countries[i]]['Region'].values[0]
+        #plt.bar(i, val, align='center', color=wiki_changes_colors_eu(state))
+        plt.bar(i, val, align='center', color=colors[state])
+
+    countries = truncate_names(countries, 10)
+
+    import matplotlib.patches as mpatches
+
+    handles = []
+    for key in colors.keys():
+        handles.append(mpatches.Patch(color=colors[key], label=key))
+    plt.legend(handles=handles)  
+    plt.xticks(range(len(cor_val)), countries, rotation=90)
+    plt.ylabel('Wikipedia instability [1st metric]')
+    plt.title('Top '+str(len(countries)) + title)
+
+    plt.show()
+
+def get_country_values_perQuadClass(aggregated_gdelt, cntr_code, start, stop):
+    values_to_plot = aggregated_gdelt[ (aggregated_gdelt['ActionGeo_CountryCode'] == cntr_code) &
+                                     ((aggregated_gdelt['SQLDATE']).astype(pd.Timestamp) >= pd.Timestamp(start)) &
+                                     ((aggregated_gdelt['SQLDATE']).astype(pd.Timestamp) <= pd.Timestamp(stop))]
+    values_to_plot = values_to_plot[['SQLDATE','ActionGeo_CountryCode', 'QuadClass', 'Counter']]
+    values_to_plot.groupby(['SQLDATE','ActionGeo_CountryCode', 'QuadClass']).sum()
+
+    val1 = values_to_plot[values_to_plot['QuadClass'] == 'Verbal Cooperation']
+    val2 = values_to_plot[values_to_plot['QuadClass'] == 'Material Cooperation']
+    val3 = values_to_plot[values_to_plot['QuadClass'] == 'Verbal Conflict']
+    val4 = values_to_plot[values_to_plot['QuadClass'] == 'Material Conflict']
+
+    x1 = val1['SQLDATE'].values
+    y1 = (val1['Counter']/val1['Counter'].mean()).values
+
+    x2 = val2['SQLDATE'].values
+    y2 = (val2['Counter']/val2['Counter'].mean()).values
+
+    x3 = val3['SQLDATE'].values
+    y3 = (val3['Counter']/val3['Counter'].mean()).values
+
+    x4 = val4['SQLDATE'].values
+    y4 = (val4['Counter']/val4['Counter'].mean()).values
+    
+    sum_all = np.sum(y1) + np.sum(y2) + np.sum(y3) + np.sum(y4)
+    try:
+        s1 = np.sum(y1)/sum_all
+        s2 = np.sum(y2)/sum_all
+        s3 = np.sum(y3)/sum_all
+        s4 = np.sum(y3)/sum_all
+    except:
+        s1 = 0
+        s2 = 0
+        s3 = 0
+        s4 = 0
+    return [x1, x2, x3, x4], [y1, y2, y3, y4], [s1,s2,s3,s4]
+
+def analyse_wiki_events_correlation_QuadClass(aggregated_gdelt,country_code, country_name, date_start, date_stop, plot=False):
+    history_fetcher = HistoryFetcher(country_name)
+    response = history_fetcher.get_history(date_start, date_stop)
+
+    # Keeps only the date field for each edit
+    edits_dates = list(map(lambda revision: revision['timestamp'], response))
+    plt.figure(figsize=(7,4))
+    
+    bins_nr = int( (pd.Timestamp(date_stop) - pd.Timestamp(date_start) ).days/30.5  ) # 1mo per bar
+    
+    # Add historgram for the number of edits on country's wikipedia page (normalized)
+    n_wiki, bins_wiki, patches_wiki = plt.hist(edits_dates,\
+                                               bins=bins_nr,\
+                                               normed=True,\
+                                               color='blue',\
+                                               alpha=0.5,\
+                                               label='# of wiki edits '+country_name)
+    plt.hold(True)
+    
+    x, y, s = get_country_values_perQuadClass(aggregated_gdelt,country_code , date_start, date_stop)
+    corrs = list()
+    surreneses =list()
+    for i in range(len(x)):
+
+    
+        # Add histogram for the number of events (normalized)s
+        n_event, bins_event, patches_event = plt.hist(x[i],\
+                                                      weights=y[i],
+                                                      bins=bins_nr,\
+                                                      normed=True,\
+                                                      alpha=0.2,\
+                                                      label='# events type ' + str(i))
+        corr, non_sureness = pearsonr(n_event, n_wiki)
+
+        corrs.append(corr)
+        surreneses.append(1-non_sureness)
+
+    if(plot == True):
+        plt.xticks(rotation=0)
+        plt.xlabel('Time in months \n correlations per class' + str(np.array(corrs)*np.array(surreneses)))
+        plt.ylabel('Normalized number of edits/events')
+        plt.legend(loc='upper left')
+        plt.title('Nr of Wiki Edits and GDELT Events for ' + country_name)
+        plt.show()
+        
+    return np.array(corrs)*np.array(surreneses), s
+    
